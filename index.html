@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>zzoinn — 여행 아카이브</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #EEEBE4;
+    --bg-elevated: #F8F6F1;
+    --ink: #1A1C20;
+    --ink-soft: #62646C;
+    --ink-faint: #93959C;
+    --accent: #D89A3E;
+    --line: rgba(26,28,32,0.10);
+    --globe-core: #F3C66E;
+    --globe-ocean: #7EC8E3;
+    --globe-ocean2: #4FA8C7;
+    --globe-edge: #9C6A21;
+    --shadow-soft: rgba(26,28,32,0.10);
+
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+    --sp-6: 32px; --sp-7: 48px; --sp-8: 64px; --sp-9: 96px;
+
+    --radius-s: 10px; --radius-m: 18px; --radius-l: 30px;
+  }
+
+  html[data-theme="dark"] {
+    --bg: #10131A;
+    --bg-elevated: #161A22;
+    --ink: #ECEAE2;
+    --ink-soft: #A2A6B3;
+    --ink-faint: #6B6F7B;
+    --accent: #96A8E4;
+    --line: rgba(255,255,255,0.10);
+    --globe-core: #5E72B9;
+    --globe-ocean: #2A5F7A;
+    --globe-ocean2: #1A3F52;
+    --globe-edge: #11141C;
+    --shadow-soft: rgba(0,0,0,0.45);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    transition: background-color .5s ease, color .5s ease;
+  }
+
+  body { overflow: hidden; }
+  body.site-entered { overflow: auto; }
+
+  a, button, input { font-family: inherit; color: inherit; }
+  button { cursor: pointer; background: none; border: none; }
+  ::selection { background: var(--accent); color: var(--bg-elevated); }
+
+  /* ============================================
+     STAGE 1: 화면 꽉 채우는 큰 지구본
+     ============================================ */
+  .intro-layer {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: min(92vw, 92vh);
+    height: min(92vw, 92vh);
+    transform: translate(-50%, -50%) scale(1);
+    transform-origin: 50% 50%;
+    z-index: 20;
+    transition: top 1.15s cubic-bezier(.65,0,.35,1),
+                left 1.15s cubic-bezier(.65,0,.35,1),
+                width 1.15s cubic-bezier(.65,0,.35,1),
+                height 1.15s cubic-bezier(.65,0,.35,1),
+                transform 1.15s cubic-bezier(.65,0,.35,1);
+  }
+  body.site-entered .intro-layer {
+    top: 0;
+    left: 50%;
+    width: 260px;
+    height: 260px;
+    transform: translate(-50%, -30px) scale(1);
+  }
+
+  .globe-button {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: block;
+  }
+  .globe-button:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 6px;
+  }
+  body.site-entered .globe-button { pointer-events: none; }
+
+  .globe-svg { width: 100%; height: 100%; display: block; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .sphere-float { animation: sway 5s ease-in-out infinite; }
+  }
+  @keyframes sway {
+    0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+    50%      { transform: translateY(-10px) rotate(1.5deg); }
+  }
+
+  .sketchy { filter: url(#sketchFilter); }
+
+  .intro-hint {
+    position: fixed;
+    bottom: 8vh;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+    opacity: 0;
+    z-index: 19;
+    animation: hintFade 1s ease forwards;
+    animation-delay: 1.2s;
+    transition: opacity .35s ease;
+  }
+  @keyframes hintFade { to { opacity: 1; } }
+  body.site-entered .intro-hint { opacity: 0 !important; pointer-events: none; }
+
+  /* ============================================
+     STAGE 2: 도킹된 반쪽 지구본 + 캐릭터
+     ============================================ */
+  .dome-wrap {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 340px;
+    z-index: 8;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .6s ease .4s;
+  }
+  body.site-entered .dome-wrap { opacity: 1; }
+
+  .dome-svg { width: 100%; display: block; }
+
+  .walker-wrap {
+    position: fixed;
+    top: 112px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .5s ease .7s;
+  }
+  body.site-entered .walker-wrap { opacity: 1; }
+
+  .walker-figure { width: 34px; height: 44px; display: block; }
+  @media (prefers-reduced-motion: no-preference) {
+    body.site-entered .walker-figure { animation: patrol 6s ease-in-out infinite; }
+  }
+  @keyframes patrol {
+    0%   { transform: translate(-95px, 0)   scaleX(1); }
+    10%  { transform: translate(-64px, -7px) scaleX(1); }
+    20%  { transform: translate(-32px, 0)   scaleX(1); }
+    30%  { transform: translate(0,     -7px) scaleX(1); }
+    40%  { transform: translate(32px,  0)   scaleX(1); }
+    49%  { transform: translate(64px,  -7px) scaleX(1); }
+    50%  { transform: translate(64px,  -7px) scaleX(-1); }
+    60%  { transform: translate(32px,  0)   scaleX(-1); }
+    70%  { transform: translate(0,     -7px) scaleX(-1); }
+    80%  { transform: translate(-32px, 0)   scaleX(-1); }
+    90%  { transform: translate(-64px, -7px) scaleX(-1); }
+    100% { transform: translate(-95px, 0)   scaleX(1); }
+  }
+
+  .dome-spacer {
+    height: 0;
+    transition: height 1.15s cubic-bezier(.65,0,.35,1);
+  }
+  body.site-entered .dome-spacer { height: 180px; }
+
+  /* ============================================
+     상단 네비게이션 — 좌: 세로 탭 / 우: 집모양 로고
+     ============================================ */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--sp-4) var(--sp-7);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 30;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: background-color .5s ease, border-color .5s ease,
+                opacity .6s ease .5s, transform .6s ease .5s;
+  }
+  body.site-entered .nav { opacity: 1; transform: none; pointer-events: auto; }
+
+  /* 왼쪽: 세로 탭 */
+  .nav__links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    list-style: none;
+  }
+  .nav__links a {
+    text-decoration: none;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.04em;
+    transition: color .25s ease;
+    line-height: 1.4;
+  }
+  .nav__links a:hover { color: var(--ink); }
+
+  /* 오른쪽: 집모양 로고 */
+  .nav__logo-wrap {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 집 모양: 사각형 + 위에 삼각 지붕 */
+  .house-shape {
+    position: relative;
+    background: var(--accent);
+    width: 72px;
+    height: 56px;
+    border-radius: 4px 4px 6px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 22px;
+  }
+  .house-shape::before {
+    content: '';
+    position: absolute;
+    top: -22px;
+    left: -6px;
+    width: 0;
+    height: 0;
+    border-left: 42px solid transparent;
+    border-right: 42px solid transparent;
+    border-bottom: 26px solid var(--accent);
+  }
+
+  .nav__logo-line {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--bg);
+    letter-spacing: 0.06em;
+    line-height: 1.1;
+  }
+
+  /* 다크모드 토글 — 우측 끝 */
+  .theme-toggle {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: var(--sp-4);
+  }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .theme-toggle .icon {
+    position: absolute;
+    font-size: 1rem;
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .theme-toggle .icon--sun  { opacity: 1; transform: rotate(0deg) scale(1); }
+  .theme-toggle .icon--moon { opacity: 0; transform: rotate(-80deg) scale(.5); }
+  html[data-theme="dark"] .theme-toggle .icon--sun  { opacity: 0; transform: rotate(80deg) scale(.5); }
+  html[data-theme="dark"] .theme-toggle .icon--moon { opacity: 1; transform: rotate(0deg) scale(1); }
+
+  .nav__right {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+
+  /* ============================================
+     메인 콘텐츠
+     ============================================ */
+  main {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity .6s ease .55s, transform .6s ease .55s;
+  }
+  body.site-entered main { opacity: 1; transform: none; pointer-events: auto; }
+
+  .hero {
+    padding: var(--sp-8) var(--sp-7) var(--sp-7);
+    text-align: center;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  .hero__eyebrow {
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+    margin-bottom: var(--sp-4);
+  }
+  .hero__headline {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3.2rem);
+    line-height: 1.3;
+    margin-bottom: var(--sp-6);
+  }
+
+  .search {
+    display: flex;
+    gap: var(--sp-3);
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    padding: var(--sp-2);
+    max-width: 560px;
+    margin: 0 auto var(--sp-5);
+    transition: background-color .5s ease, border-color .5s ease;
+  }
+  .search input { flex: 1; border: none; background: none; padding: var(--sp-3) var(--sp-4); font-size: 0.95rem; }
+  .search input:focus { outline: none; }
+  .search button {
+    background: var(--ink);
+    color: var(--bg);
+    padding: var(--sp-3) var(--sp-5);
+    border-radius: var(--radius-m);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color .5s ease, color .5s ease;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-3); }
+  .chip {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    padding: var(--sp-2) var(--sp-4);
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    transition: border-color .25s ease, color .25s ease;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--ink); }
+
+  /* ============================================
+     매거진
+     ============================================ */
+  .stories { padding: var(--sp-7) var(--sp-7) var(--sp-9); max-width: 1180px; margin: 0 auto; }
+  .stories__head { margin-bottom: var(--sp-7); }
+  .stories__head .eyebrow { font-size: 0.8rem; letter-spacing: 0.18em; color: var(--ink-faint); margin-bottom: var(--sp-3); }
+  .stories__head h2 { font-family: var(--font-display); font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 500; }
+
+  .stories__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-5); }
+
+  .card {
+    border-radius: var(--radius-m);
+    overflow: hidden;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    transition: transform .35s ease, border-color .5s ease, background-color .5s ease;
+  }
+  .card:hover { transform: translateY(-6px); }
+
+  .card__thumb { height: 180px; position: relative; display: flex; align-items: flex-end; padding: var(--sp-3); }
+  html[data-theme="dark"] .card__thumb { filter: brightness(.82) saturate(.9); }
+  .card__thumb span { background: rgba(0,0,0,0.35); color: #fff; font-size: 0.72rem; padding: 4px 10px; border-radius: 999px; backdrop-filter: blur(4px); }
+
+  .card__body { padding: var(--sp-4); }
+  .card__title { font-family: var(--font-display); font-size: 1.05rem; margin-bottom: var(--sp-2); }
+  .card__excerpt { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.55; }
+
+  .thumb-1 { background: linear-gradient(135deg, #E7B25F, #C2693A); }
+  .thumb-2 { background: linear-gradient(135deg, #8E97A6, #3D4654); }
+  .thumb-3 { background: linear-gradient(135deg, #7FA66E, #36563F); }
+  .thumb-4 { background: linear-gradient(135deg, #D88A8E, #7A3B4C); }
+
+  footer {
+    text-align: center;
+    padding: var(--sp-7);
+    border-top: 1px solid var(--line);
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+    transition: border-color .5s ease;
+  }
+
+  @media (max-width: 860px) {
+    .nav { padding: var(--sp-4) var(--sp-5); }
+    .hero { padding: var(--sp-7) var(--sp-5); }
+    .stories { padding: var(--sp-6) var(--sp-5); }
+    .stories__grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 520px) {
+    .stories__grid { grid-template-columns: 1fr; }
+    .search { flex-direction: column; border-radius: var(--radius-m); }
+  }
+</style>
+</head>
+<body>
+
+  <!-- SVG 필터 -->
+  <svg width="0" height="0" style="position:absolute">
+    <filter id="sketchFilter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.03" numOctaves="3" seed="5" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" />
+    </filter>
+    <filter id="sketchFilterLight">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015 0.05" numOctaves="2" seed="12" result="noise2" />
+      <feDisplacementMap in="SourceGraphic" in2="noise2" scale="3" />
+    </filter>
+  </svg>
+
+  <!-- STAGE 1: 화면 꽉 채우는 지구본 -->
+  <div class="intro-layer" id="introLayer">
+    <button class="globe-button" id="globeButton" aria-label="zzoinn 둘러보기 시작">
+      <svg class="globe-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="sphereGrad" cx="33%" cy="28%" r="78%">
+            <stop offset="0%" stop-color="#B8E4F2" />
+            <stop offset="45%" stop-color="#7EC8E3" />
+            <stop offset="100%" stop-color="#2A7FA8" />
+          </radialGradient>
+          <radialGradient id="sphereGradDark" cx="33%" cy="28%" r="78%">
+            <stop offset="0%" stop-color="#3A6A85" />
+            <stop offset="60%" stop-color="#1E4F6B" />
+            <stop offset="100%" stop-color="#0A1F2E" />
+          </radialGradient>
+          <clipPath id="globeClip">
+            <circle cx="200" cy="200" r="178" />
+          </clipPath>
+        </defs>
+
+        <g class="sphere-float">
+          <!-- 바다 배경 -->
+          <circle cx="200" cy="200" r="178" fill="url(#sphereGrad)" stroke="var(--ink)" stroke-width="3.5" class="sketchy" />
+
+          <g clip-path="url(#globeClip)">
+            <!-- 경도·위도 선 (손그림 느낌) -->
+            <ellipse cx="200" cy="200" rx="178" ry="55" fill="none" stroke="var(--ink)" stroke-opacity="0.08" stroke-width="1.5" class="sketchy" />
+            <ellipse cx="200" cy="200" rx="178" ry="110" fill="none" stroke="var(--ink)" stroke-opacity="0.08" stroke-width="1.5" class="sketchy" />
+            <line x1="22" y1="200" x2="378" y2="200" stroke="var(--ink)" stroke-opacity="0.10" stroke-width="1.5" />
+            <line x1="200" y1="22" x2="200" y2="378" stroke="var(--ink)" stroke-opacity="0.08" stroke-width="1.5" />
+            <line x1="90" y1="30" x2="90" y2="370" stroke="var(--ink)" stroke-opacity="0.06" stroke-width="1" />
+            <line x1="310" y1="30" x2="310" y2="370" stroke="var(--ink)" stroke-opacity="0.06" stroke-width="1" />
+
+            <!-- 북아메리카 -->
+            <path class="sketchy" d="
+              M 95,85
+              Q 105,70 125,68
+              Q 148,62 158,75
+              Q 168,88 162,102
+              Q 172,110 168,128
+              Q 160,148 148,158
+              Q 138,168 122,172
+              Q 108,175 98,165
+              Q 82,158 78,140
+              Q 68,125 72,108
+              Q 74,94 95,85 Z
+            " fill="#7DBF72" fill-opacity="0.85" stroke="var(--ink)" stroke-opacity="0.55" stroke-width="2.2" stroke-linejoin="round" />
+
+            <!-- 남아메리카 -->
+            <path class="sketchy" d="
+              M 120,195
+              Q 132,188 148,192
+              Q 162,196 168,212
+              Q 175,230 170,252
+              Q 164,275 150,288
+              Q 138,298 124,292
+              Q 110,284 106,265
+              Q 100,244 104,222
+              Q 108,205 120,195 Z
+            " fill="#7DBF72" fill-opacity="0.85" stroke="var(--ink)" stroke-opacity="0.55" stroke-width="2.2" stroke-linejoin="round" />
+
+            <!-- 유럽 -->
+            <path class="sketchy" d="
+              M 196,88
+              Q 205,80 218,82
+              Q 232,84 238,96
+              Q 244,108 236,120
+              Q 228,130 214,132
+              Q 200,134 192,124
+              Q 184,114 186,100
+              Q 188,91 196,88 Z
+            " fill="#E8C97A" fill-opacity="0.9" stroke="var(--ink)" stroke-opacity="0.55" stroke-width="2" stroke-linejoin="round" />
+
+            <!-- 아프리카 -->
+            <path class="sketchy" d="
+              M 200,138
+              Q 216,132 230,138
+              Q 248,144 254,162
+              Q 260,180 256,202
+              Q 252,224 242,242
+              Q 232,260 218,268
+              Q 204,274 192,266
+              Q 178,256 172,236
+              Q 166,214 168,192
+              Q 170,168 178,152
+              Q 186,138 200,138 Z
+            " fill="#E8C97A" fill-opacity="0.9" stroke="var(--ink)" stroke-opacity="0.55" stroke-width="2.2" stroke-linejoin="round" />
+
+            <!-- 아시아 -->
+            <path class="sketchy" d="
+              M 248,72
+              Q 268,62 292,66
+              Q 318,70 336,84
+              Q 358,98 362,118
+              Q 366,140 354,158
+              Q 342,175 320,180
+              Q 298,185 278,178
+              Q 256,170 244,152
+              Q 232,134 234,112
+              Q 236,90 248,72 Z
+            " fill="#E8C97A" fill-opacity="0.9" stroke="var(--ink)" stroke-opacity="0.55" stroke-width="2.2" stroke-linejoin="round" />
+
+            <!-- 오세아니아 -->
+            <path class="sketchy" d="
+              M 302,232
+              Q 318,224 336,228
+              Q 350,232 356,248
+              Q 360,262 350,274
+              Q 338,285 322,282
+              Q 306,278 298,264
+              Q 292,250 298,238
+              Q 300,234 302,232 Z
+            " fill="#7DBF72" fill-opacity="0.75" stroke="var(--ink)" stroke-opacity="0.5" stroke-width="1.8" stroke-linejoin="round" />
+
+            <!-- 귀여운 포인트: 별/점 강조 -->
+            <circle cx="214" cy="110" r="3" fill="var(--ink)" fill-opacity="0.25" />
+            <circle cx="130" cy="130" r="2.5" fill="var(--ink)" fill-opacity="0.2" />
+            <circle cx="308" cy="130" r="2.5" fill="var(--ink)" fill-opacity="0.2" />
+          </g>
+
+          <!-- 테두리 광택 -->
+          <circle cx="200" cy="200" r="178" fill="none" stroke="white" stroke-opacity="0.18" stroke-width="2" />
+          <!-- 하이라이트 -->
+          <ellipse cx="155" cy="140" rx="38" ry="22" fill="white" fill-opacity="0.14" transform="rotate(-30 155 140)" />
+        </g>
+      </svg>
+    </button>
+  </div>
+
+  <p class="intro-hint" id="introHint">눌러서 떠나볼까요? 🌍</p>
+
+  <!-- STAGE 2: 상단 반쪽 지구본 (캐릭터 플랫폼) -->
+  <div class="dome-wrap" id="domeWrap" aria-hidden="true">
+    <svg class="dome-svg" viewBox="0 0 340 175" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="domeGrad" cx="50%" cy="10%" r="90%">
+          <stop offset="0%" stop-color="#B8E4F2" />
+          <stop offset="60%" stop-color="#7EC8E3" />
+          <stop offset="100%" stop-color="#2A7FA8" />
+        </radialGradient>
+        <clipPath id="domeClip">
+          <rect x="0" y="0" width="340" height="175" />
+        </clipPath>
+      </defs>
+      <!-- 반원 바다 -->
+      <ellipse cx="170" cy="175" rx="168" ry="168" fill="url(#domeGrad)" clip-path="url(#domeClip)" />
+      <!-- 경도선 -->
+      <ellipse cx="170" cy="175" rx="168" ry="52" fill="none" stroke="var(--ink)" stroke-opacity="0.08" stroke-width="1.2" clip-path="url(#domeClip)" />
+      <ellipse cx="170" cy="175" rx="168" ry="105" fill="none" stroke="var(--ink)" stroke-opacity="0.06" stroke-width="1" clip-path="url(#domeClip)" />
+      <line x1="170" y1="7" x2="170" y2="175" stroke="var(--ink)" stroke-opacity="0.07" stroke-width="1" />
+      <line x1="62" y1="14" x2="62" y2="175" stroke="var(--ink)" stroke-opacity="0.05" stroke-width="1" />
+      <line x1="278" y1="14" x2="278" y2="175" stroke="var(--ink)" stroke-opacity="0.05" stroke-width="1" />
+      <!-- 미니 대륙 흔적 -->
+      <path d="M 80,80 Q 92,70 108,76 Q 120,82 116,96 Q 110,110 96,112 Q 80,110 76,96 Q 73,86 80,80 Z"
+            fill="#7DBF72" fill-opacity="0.65" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1.5" />
+      <path d="M 145,52 Q 156,44 170,48 Q 184,52 186,66 Q 188,80 174,86 Q 158,90 148,78 Q 138,66 145,52 Z"
+            fill="#E8C97A" fill-opacity="0.7" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1.5" />
+      <path d="M 220,65 Q 234,58 250,64 Q 264,70 264,86 Q 262,100 248,104 Q 232,108 222,96 Q 212,84 220,65 Z"
+            fill="#E8C97A" fill-opacity="0.65" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1.5" />
+      <!-- 테두리 -->
+      <ellipse cx="170" cy="175" rx="168" ry="168" fill="none" stroke="var(--ink)" stroke-width="2.5" clip-path="url(#domeClip)" />
+      <!-- 하단 평면선 강조 -->
+      <line x1="2" y1="174" x2="338" y2="174" stroke="var(--ink)" stroke-opacity="0.25" stroke-width="1.5" />
+    </svg>
+  </div>
+
+  <!-- 캐릭터 -->
+  <div class="walker-wrap" id="walker" aria-hidden="true">
+    <svg class="walker-figure" viewBox="0 0 40 50">
+      <ellipse cx="20" cy="30" rx="9" ry="12" fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5" />
+      <circle cx="20" cy="13" r="8" fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5" />
+      <circle cx="17" cy="12" r="1.2" fill="var(--ink)" />
+      <circle cx="23" cy="12" r="1.2" fill="var(--ink)" />
+      <path d="M16,16 Q20,18 24,16" fill="none" stroke="var(--ink)" stroke-width="1.3" stroke-linecap="round" />
+      <line x1="14" y1="24" x2="6"  y2="30" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" />
+      <line x1="26" y1="24" x2="34" y2="30" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" />
+      <line x1="16" y1="40" x2="12" y2="49" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round" />
+      <line x1="24" y1="40" x2="28" y2="49" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round" />
+    </svg>
+  </div>
+
+  <div class="dome-spacer"></div>
+
+  <header class="nav">
+    <!-- 왼쪽: 세로 탭 -->
+    <nav>
+      <ul class="nav__links">
+        <li><a href="#magazine">Magazine</a></li>
+        <li><a href="#goods">Goods</a></li>
+      </ul>
+    </nav>
+
+    <!-- 오른쪽: 집모양 로고 + 다크모드 토글 -->
+    <div class="nav__right">
+      <div class="nav__logo-wrap">
+        <div class="house-shape">
+          <span class="nav__logo-line">zzo</span>
+          <span class="nav__logo-line">inn</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="다크 모드로 전환" aria-pressed="false">
+        <span class="icon icon--sun">☀️</span>
+        <span class="icon icon--moon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="hero__eyebrow">TRAVEL ARCHIVE</p>
+      <h1 class="hero__headline">오늘 어떤 여행을<br>하고 싶나요?</h1>
+
+      <form class="search" id="searchForm">
+        <input type="text" id="searchInput" placeholder="조용한 바다, 혼자 걷기 좋은 도시, 사진 찍기 좋은 장소…" />
+        <button type="submit">탐색</button>
+      </form>
+
+      <div class="chips">
+        <button class="chip">조용한 바다가 있는 여행</button>
+        <button class="chip">현지 맛집을 찾는 여행</button>
+        <button class="chip">혼자 걷기 좋은 도시</button>
+        <button class="chip">사진 찍기 좋은 장소</button>
+      </div>
+    </section>
+
+    <section class="stories" id="magazine">
+      <div class="stories__head">
+        <p class="eyebrow">MAGAZINE</p>
+        <h2>지금, 어딘가의 이야기</h2>
+      </div>
+
+      <div class="stories__grid">
+        <article class="card">
+          <div class="card__thumb thumb-1"><span>📍 리스본, 포르투갈</span></div>
+          <div class="card__body">
+            <p class="card__title">골목 끝 작은 다이너</p>
+            <p class="card__excerpt">아침 6시, 트램 소리만 울리는 알파마 골목에서 만난 핫초콜릿 한 잔.</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card__thumb thumb-2"><span>📍 교토, 일본</span></div>
+          <div class="card__body">
+            <p class="card__title">관광객이 없는 새벽</p>
+            <p class="card__excerpt">기온의 좁은 돌길, 인력거꾼 한 명과 마주친 새벽 다섯 시의 고요함.</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card__thumb thumb-3"><span>📍 우붓, 인도네시아</span></div>
+          <div class="card__body">
+            <p class="card__title">초록 사이 작은 책방</p>
+            <p class="card__excerpt">논 한가운데 숨어 있는 헌책방에서, 커피 한 잔과 빗소리를 들으며.</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card__thumb thumb-4"><span>📍 나프플리오, 그리스</span></div>
+          <div class="card__body">
+            <p class="card__title">계단 위 작은 발코니</p>
+            <p class="card__excerpt">여행자는 모르는 동네 빵집, 갓 구운 빵 냄새를 따라간 골목 끝.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer id="goods">
+    zzoinn — Places become memories, memories become stories.
+  </footer>
+
+  <script>
+    const body = document.body;
+    const globeButton = document.getElementById('globeButton');
+    globeButton.addEventListener('click', () => {
+      if (body.classList.contains('site-entered')) return;
+      body.classList.add('site-entered');
+    });
+
+    const root = document.documentElement;
+    const toggle = document.getElementById('themeToggle');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let theme = prefersDark ? 'dark' : 'light';
+    root.setAttribute('data-theme', theme);
+    syncToggle();
+
+    toggle.addEventListener('click', () => {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', theme);
+      syncToggle();
+    });
+    function syncToggle() {
+      toggle.setAttribute('aria-pressed', theme === 'dark');
+      toggle.setAttribute('aria-label', theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환');
+    }
+
+    const searchInput = document.getElementById('searchInput');
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        searchInput.value = chip.textContent;
+        searchInput.focus();
+      });
+    });
+    document.getElementById('searchForm').addEventListener('submit', e => e.preventDefault());
+  </script>
+
+</body>
+</html>
