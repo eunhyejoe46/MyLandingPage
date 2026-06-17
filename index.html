@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>zzoinn — 여행 아카이브</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #EEEBE4;
+    --bg-elevated: #F8F6F1;
+    --ink: #1A1C20;
+    --ink-soft: #62646C;
+    --ink-faint: #93959C;
+    --accent: #D89A3E;
+    --line: rgba(26,28,32,0.10);
+    --globe-core: #F3C66E;
+    --globe-edge: #9C6A21;
+    --shadow-soft: rgba(26,28,32,0.10);
+
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+    --sp-6: 32px; --sp-7: 48px; --sp-8: 64px; --sp-9: 96px;
+
+    --radius-s: 10px; --radius-m: 18px; --radius-l: 30px;
+  }
+
+  html[data-theme="dark"] {
+    --bg: #10131A;
+    --bg-elevated: #161A22;
+    --ink: #ECEAE2;
+    --ink-soft: #A2A6B3;
+    --ink-faint: #6B6F7B;
+    --accent: #96A8E4;
+    --line: rgba(255,255,255,0.10);
+    --globe-core: #5E72B9;
+    --globe-edge: #11141C;
+    --shadow-soft: rgba(0,0,0,0.45);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    transition: background-color .5s ease, color .5s ease;
+  }
+
+  /* 랜딩 단계에서는 스크롤 잠금 (지구본 모먼트에 집중) */
+  body { overflow: hidden; }
+  body.site-entered { overflow: auto; }
+
+  a, button, input { font-family: inherit; color: inherit; }
+  button { cursor: pointer; background: none; border: none; }
+  ::selection { background: var(--accent); color: var(--bg-elevated); }
+
+  /* ============================================
+     STAGE 1→2 인트로 레이어
+     처음엔 화면 중앙에 큰 지구본만, 클릭하면
+     상단에 도킹되는 반쪽 지구본으로 전환
+     ============================================ */
+  .intro-layer {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    width: 320px;
+    height: 320px;
+    margin-left: -160px;
+    z-index: 20;
+    transform-origin: 50% 0%;
+    transform: translateY(20vh) scale(1);
+    transition: transform 1.15s cubic-bezier(.65,0,.35,1);
+  }
+  body.site-entered .intro-layer {
+    transform: translateY(-150px) scale(0.42);
+  }
+
+  .globe-button {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: block;
+  }
+  .globe-button:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 6px;
+  }
+  body.site-entered .globe-button { pointer-events: none; }
+
+  .globe-svg { width: 100%; height: 100%; display: block; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .sphere-float { animation: sway 5s ease-in-out infinite; }
+    .continent-a { animation: spin-pulse 9s linear infinite; }
+    .continent-b { animation: spin-pulse 9s linear infinite; animation-delay: -3s; }
+    .continent-c { animation: spin-pulse 9s linear infinite; animation-delay: -6s; }
+  }
+  @keyframes sway {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50%      { transform: translateY(-14px) rotate(3deg); }
+  }
+  @keyframes spin-pulse {
+    0%   { transform: scaleX(1); }
+    50%  { transform: scaleX(0.08); }
+    100% { transform: scaleX(1); }
+  }
+  .continent-a, .continent-b, .continent-c { transform-origin: 200px 200px; }
+
+  /* 손그림 느낌의 떨리는 선 */
+  .sketchy { filter: url(#sketchFilter); }
+
+  .intro-hint {
+    position: fixed;
+    top: calc(20vh + 330px);
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.02em;
+    opacity: 0;
+    z-index: 19;
+    animation: hintFade 1s ease forwards;
+    animation-delay: 1s;
+    transition: opacity .35s ease;
+  }
+  @keyframes hintFade { to { opacity: 1; } }
+  body.site-entered .intro-hint { opacity: 0 !important; pointer-events: none; }
+
+  /* --- 걸어다니는 캐릭터: 도킹된 반쪽 지구본 위에서 좌우 패트롤 --- */
+  .walker-wrap {
+    position: fixed;
+    top: 76px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .5s ease .55s;
+  }
+  body.site-entered .walker-wrap { opacity: 1; }
+
+  .walker-figure { width: 38px; height: 48px; display: block; }
+  @media (prefers-reduced-motion: no-preference) {
+    body.site-entered .walker-figure { animation: patrol 6s ease-in-out infinite; }
+  }
+  @keyframes patrol {
+    0%   { transform: translate(-90px, 0)   scaleX(1); }
+    10%  { transform: translate(-60px, -7px) scaleX(1); }
+    20%  { transform: translate(-30px, 0)   scaleX(1); }
+    30%  { transform: translate(0,     -7px) scaleX(1); }
+    40%  { transform: translate(30px,  0)   scaleX(1); }
+    49%  { transform: translate(60px,  -7px) scaleX(1); }
+    50%  { transform: translate(60px,  -7px) scaleX(-1); }
+    60%  { transform: translate(30px,  0)   scaleX(-1); }
+    70%  { transform: translate(0,     -7px) scaleX(-1); }
+    80%  { transform: translate(-30px, 0)   scaleX(-1); }
+    90%  { transform: translate(-60px, -7px) scaleX(-1); }
+    100% { transform: translate(-90px, 0)   scaleX(1); }
+  }
+
+  /* 반쪽 지구본이 도킹할 자리를 일반 흐름에서 미리 비워둠 */
+  .dome-spacer {
+    height: 0;
+    transition: height 1.15s cubic-bezier(.65,0,.35,1);
+  }
+  body.site-entered .dome-spacer { height: 122px; }
+
+  /* ============================================
+     상단 네비게이션 — zzoinn(좌) / 탭 + 다크모드(우)
+     ============================================ */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--sp-5) var(--sp-7);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 30;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: background-color .5s ease, border-color .5s ease,
+                opacity .6s ease .5s, transform .6s ease .5s;
+  }
+  body.site-entered .nav { opacity: 1; transform: none; pointer-events: auto; }
+
+  .nav__logo {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  .nav__right { display: flex; align-items: center; gap: var(--sp-6); }
+
+  .nav__links { display: flex; gap: var(--sp-6); list-style: none; }
+  .nav__links a {
+    text-decoration: none;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    transition: color .25s ease;
+  }
+  .nav__links a:hover { color: var(--ink); }
+
+  .theme-toggle {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .theme-toggle .icon {
+    position: absolute;
+    font-size: 1.1rem;
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .theme-toggle .icon--sun  { opacity: 1; transform: rotate(0deg) scale(1); }
+  .theme-toggle .icon--moon { opacity: 0; transform: rotate(-80deg) scale(.5); }
+  html[data-theme="dark"] .theme-toggle .icon--sun  { opacity: 0; transform: rotate(80deg) scale(.5); }
+  html[data-theme="dark"] .theme-toggle .icon--moon { opacity: 1; transform: rotate(0deg) scale(1); }
+
+  /* ============================================
+     메인 콘텐츠 (인트로 종료 후 페이드인)
+     ============================================ */
+  main {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity .6s ease .55s, transform .6s ease .55s;
+  }
+  body.site-entered main { opacity: 1; transform: none; pointer-events: auto; }
+
+  .hero {
+    padding: var(--sp-8) var(--sp-7) var(--sp-7);
+    text-align: center;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  .hero__eyebrow {
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+    margin-bottom: var(--sp-4);
+  }
+  .hero__headline {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5vw, 3.2rem);
+    line-height: 1.3;
+    margin-bottom: var(--sp-6);
+  }
+
+  .search {
+    display: flex;
+    gap: var(--sp-3);
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    padding: var(--sp-2);
+    max-width: 560px;
+    margin: 0 auto var(--sp-5);
+    transition: background-color .5s ease, border-color .5s ease;
+  }
+  .search input { flex: 1; border: none; background: none; padding: var(--sp-3) var(--sp-4); font-size: 0.95rem; }
+  .search input:focus { outline: none; }
+  .search button {
+    background: var(--ink);
+    color: var(--bg);
+    padding: var(--sp-3) var(--sp-5);
+    border-radius: var(--radius-m);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color .5s ease, color .5s ease;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-3); }
+  .chip {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    padding: var(--sp-2) var(--sp-4);
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    transition: border-color .25s ease, color .25s ease;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--ink); }
+
+  /* ============================================
+     매거진 — 추천 여행 스토리
+     ============================================ */
+  .stories { padding: var(--sp-7) var(--sp-7) var(--sp-9); max-width: 1180px; margin: 0 auto; }
+  .stories__head { margin-bottom: var(--sp-7); }
+  .stories__head .eyebrow { font-size: 0.8rem; letter-spacing: 0.18em; color: var(--ink-faint); margin-bottom: var(--sp-3); }
+  .stories__head h2 { font-family: var(--font-display); font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 500; }
+
+  .stories__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-5); }
+
+  .card {
+    border-radius: var(--radius-m);
+    overflow: hidden;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    transition: transform .35s ease, border-color .5s ease, background-color .5s ease;
+  }
+  .card:hover { transform: translateY(-6px); }
+
+  .card__thumb { height: 180px; position: relative; display: flex; align-items: flex-end; padding: var(--sp-3); }
+  html[data-theme="dark"] .card__thumb { filter: brightness(.82) saturate(.9); }
+  .card__thumb span { background: rgba(0,0,0,0.35); color: #fff; font-size: 0.72rem; padding: 4px 10px; border-radius: 999px; backdrop-filter: blur(4px); }
+
+  .card__body { padding: var(--sp-4); }
+  .card__title { font-family: var(--font-display); font-size: 1.05rem; margin-bottom: var(--sp-2); }
+  .card__excerpt { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.55; }
+
+  .thumb-1 { background: linear-gradient(135deg, #E7B25F, #C2693A); }
+  .thumb-2 { background: linear-gradient(135deg, #8E97A6, #3D4654); }
+  .thumb-3 { background: linear-gradient(135deg, #7FA66E, #36563F); }
+  .thumb-4 { background: linear-gradient(135deg, #D88A8E, #7A3B4C); }
+
+  footer {
+    text-align: center;
+    padding: var(--sp-7);
+    border-top: 1px solid var(--line);
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+    transition: border-color .5s ease;
+  }
+
+  @media (max-width: 860px) {
+    .nav { padding: var(--sp-4) var(--sp-5); }
+    .nav__links { display: none; }
+    .hero { padding: var(--sp-7) var(--sp-5); }
+    .stories { padding: var(--sp-6) var(--sp-5); }
+    .stories__grid { grid-template-columns: 1fr 1fr; }
+    .intro-layer { width: 240px; height: 240px; margin-left: -120px; }
+    body.site-entered .intro-layer { transform: translateY(-118px) scale(0.5); }
+  }
+  @media (max-width: 520px) {
+    .stories__grid { grid-template-columns: 1fr; }
+    .search { flex-direction: column; border-radius: var(--radius-m); }
+  }
+</style>
+</head>
+<body>
+
+  <!-- SVG 필터: 손그림 같은 떨리는 선 효과 -->
+  <svg width="0" height="0" style="position:absolute">
+    <filter id="sketchFilter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.04" numOctaves="2" seed="7" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" />
+    </filter>
+  </svg>
+
+  <!-- STAGE 1→2: 인트로 지구본 (클릭하면 상단으로 도킹) -->
+  <div class="intro-layer" id="introLayer">
+    <button class="globe-button" id="globeButton" aria-label="zzoinn 둘러보기 시작">
+      <svg class="globe-svg" viewBox="0 0 400 400">
+        <defs>
+          <radialGradient id="sphereGrad" cx="35%" cy="32%" r="75%">
+            <stop offset="0%" stop-color="var(--globe-core)" />
+            <stop offset="60%" stop-color="var(--accent)" stop-opacity="0.55" />
+            <stop offset="100%" stop-color="var(--globe-edge)" />
+          </radialGradient>
+        </defs>
+
+        <g class="sphere-float">
+          <circle class="sketchy" cx="200" cy="200" r="150" fill="url(#sphereGrad)" stroke="var(--ink)" stroke-width="3" />
+
+          <g clip-path="circle(150px at 200px 200px)">
+            <!-- 손으로 그린 듯한 대륙 블롭 3개, 회전하듯 스케일 펄스 -->
+            <path class="continent-a sketchy" d="M120,150 Q140,120 175,128 Q200,118 215,140 Q230,150 210,168 Q220,190 195,195 Q165,205 150,185 Q125,178 120,150 Z" fill="var(--ink)" fill-opacity="0.16" stroke="var(--ink)" stroke-opacity="0.35" stroke-width="2" />
+            <path class="continent-b sketchy" d="M230,230 Q255,215 280,232 Q295,250 278,268 Q260,285 238,272 Q220,260 230,230 Z" fill="var(--ink)" fill-opacity="0.16" stroke="var(--ink)" stroke-opacity="0.35" stroke-width="2" />
+            <path class="continent-c sketchy" d="M170,250 Q195,240 210,258 Q215,278 195,288 Q175,295 165,275 Q160,260 170,250 Z" fill="var(--ink)" fill-opacity="0.16" stroke="var(--ink)" stroke-opacity="0.35" stroke-width="2" />
+
+            <line x1="50" y1="170" x2="350" y2="170" stroke="var(--ink)" stroke-opacity="0.10" />
+            <line x1="50" y1="230" x2="350" y2="230" stroke="var(--ink)" stroke-opacity="0.10" />
+          </g>
+
+          <circle cx="200" cy="200" r="150" fill="none" stroke="var(--accent)" stroke-opacity="0.5" stroke-width="1.5" />
+        </g>
+      </svg>
+    </button>
+  </div>
+
+  <p class="intro-hint" id="introHint">눌러서 떠나볼까요?</p>
+
+  <!-- 도킹된 반쪽 지구본 위를 걸어다니는 캐릭터 -->
+  <div class="walker-wrap" id="walker" aria-hidden="true">
+    <svg class="walker-figure" viewBox="0 0 40 50">
+      <ellipse cx="20" cy="30" rx="9" ry="12" fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5" />
+      <circle cx="20" cy="13" r="8" fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5" />
+      <circle cx="17" cy="12" r="1.2" fill="var(--ink)" />
+      <circle cx="23" cy="12" r="1.2" fill="var(--ink)" />
+      <path d="M16,16 Q20,18 24,16" fill="none" stroke="var(--ink)" stroke-width="1.3" stroke-linecap="round" />
+      <line x1="14" y1="24" x2="6"  y2="30" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" />
+      <line x1="26" y1="24" x2="34" y2="30" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" />
+      <line x1="16" y1="40" x2="12" y2="49" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round" />
+      <line x1="24" y1="40" x2="28" y2="49" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round" />
+    </svg>
+  </div>
+
+  <div class="dome-spacer"></div>
+
+  <header class="nav">
+    <div class="nav__logo">zzoinn</div>
+    <div class="nav__right">
+      <nav class="nav__links">
+        <a href="#magazine">Magazine</a>
+        <a href="#goods">Goods</a>
+      </nav>
+      <button class="theme-toggle" id="themeToggle" aria-label="다크 모드로 전환" aria-pressed="false">
+        <span class="icon icon--sun">☀️</span>
+        <span class="icon icon--moon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="hero__eyebrow">TRAVEL ARCHIVE</p>
+      <h1 class="hero__headline">오늘 어떤 여행을<br>하고 싶나요?</h1>
+
+      <form class="search" id="searchForm">
+        <input type="text" id="searchInput" placeholder="조용한 바다, 혼자 걷기 좋은 도시, 사진 찍기 좋은 장소…" />
+        <button type="submit">탐색</button>
+      </form>
+
+      <div class="chips">
+        <button class="chip">조용한 바다가 있는 여행</button>
+        <button class="chip">현지 맛집을 찾는 여행</button>
+        <button class="chip">혼자 걷기 좋은 도시</button>
+        <button class="chip">사진 찍기 좋은 장소</button>
+      </div>
+    </section>
+
+    <section class="stories" id="magazine">
+      <div class="stories__head">
+        <p class="eyebrow">MAGAZINE</p>
+        <h2>지금, 어딘가의 이야기</h2>
+      </div>
+
+      <div class="stories__grid">
+        <article class="card">
+          <div class="card__thumb thumb-1"><span>📍 리스본, 포르투갈</span></div>
+          <div class="card__body">
+            <p class="card__title">골목 끝 작은 다이너</p>
+            <p class="card__excerpt">아침 6시, 트램 소리만 울리는 알파마 골목에서 만난 핫초콜릿 한 잔.</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card__thumb thumb-2"><span>📍 교토, 일본</span></div>
+          <div class="card__body">
+            <p class="card__title">관광객이 없는 새벽</p>
+            <p class="card__excerpt">기온의 좁은 돌길, 인력거꾼 한 명과 마주친 새벽 다섯 시의 고요함.</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card__thumb thumb-3"><span>📍 우붓, 인도네시아</span></div>
+          <div class="card__body">
+            <p class="card__title">초록 사이 작은 책방</p>
+            <p class="card__excerpt">논 한가운데 숨어 있는 헌책방에서, 커피 한 잔과 빗소리를 들으며.</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card__thumb thumb-4"><span>📍 나프플리오, 그리스</span></div>
+          <div class="card__body">
+            <p class="card__title">계단 위 작은 발코니</p>
+            <p class="card__excerpt">여행자는 모르는 동네 빵집, 갓 구운 빵 냄새를 따라간 골목 끝.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer id="goods">
+    zzoinn — Places become memories, memories become stories.
+  </footer>
+
+  <script>
+    // STAGE 1 → 2: 지구본 클릭 시 사이트 진입
+    const body = document.body;
+    const globeButton = document.getElementById('globeButton');
+    globeButton.addEventListener('click', () => {
+      if (body.classList.contains('site-entered')) return;
+      body.classList.add('site-entered');
+    });
+
+    // 다크모드 토글
+    const root = document.documentElement;
+    const toggle = document.getElementById('themeToggle');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let theme = prefersDark ? 'dark' : 'light';
+    root.setAttribute('data-theme', theme);
+    syncToggle();
+
+    toggle.addEventListener('click', () => {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', theme);
+      syncToggle();
+    });
+    function syncToggle() {
+      toggle.setAttribute('aria-pressed', theme === 'dark');
+      toggle.setAttribute('aria-label', theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환');
+    }
+
+    // 검색 칩 클릭 시 입력창 채우기
+    const searchInput = document.getElementById('searchInput');
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        searchInput.value = chip.textContent;
+        searchInput.focus();
+      });
+    });
+    document.getElementById('searchForm').addEventListener('submit', e => e.preventDefault());
+  </script>
+
+</body>
+</html>
