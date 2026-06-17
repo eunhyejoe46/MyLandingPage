@@ -11,18 +11,18 @@
 
 <style>
   :root {
-    --bg: #EEEBE4;
-    --bg-elevated: #F8F6F1;
-    --ink: #1A1C20;
-    --ink-soft: #62646C;
-    --ink-faint: #93959C;
-    --accent: #D89A3E;
-    --line: rgba(26,28,32,0.10);
-    --globe-core: #F3C66E;
-    --globe-ocean: #7EC8E3;
-    --globe-ocean2: #4FA8C7;
-    --globe-edge: #9C6A21;
-    --shadow-soft: rgba(26,28,32,0.10);
+    --bg: #FFF0F6;
+    --bg-elevated: #FFF8FB;
+    --ink: #2A0A18;
+    --ink-soft: #8B2252;
+    --ink-faint: #C06090;
+    --accent: #FF1493;
+    --line: rgba(255,20,147,0.15);
+    --globe-core: #FF69B4;
+    --globe-ocean: #FFB3D9;
+    --globe-ocean2: #FF1493;
+    --globe-edge: #C2185B;
+    --shadow-soft: rgba(255,20,147,0.12);
 
     --font-display: 'Fraunces', Georgia, serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -34,18 +34,18 @@
   }
 
   html[data-theme="dark"] {
-    --bg: #10131A;
-    --bg-elevated: #161A22;
-    --ink: #ECEAE2;
-    --ink-soft: #A2A6B3;
-    --ink-faint: #6B6F7B;
-    --accent: #96A8E4;
-    --line: rgba(255,255,255,0.10);
-    --globe-core: #5E72B9;
-    --globe-ocean: #2A5F7A;
-    --globe-ocean2: #1A3F52;
-    --globe-edge: #11141C;
-    --shadow-soft: rgba(0,0,0,0.45);
+    --bg: #1A0010;
+    --bg-elevated: #24001A;
+    --ink: #FFD6EC;
+    --ink-soft: #FF8DC7;
+    --ink-faint: #C06090;
+    --accent: #FF69B4;
+    --line: rgba(255,105,180,0.20);
+    --globe-core: #C2185B;
+    --globe-ocean: #8B0045;
+    --globe-ocean2: #5A0030;
+    --globe-edge: #0D0009;
+    --shadow-soft: rgba(255,20,147,0.35);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -390,10 +390,10 @@
   .card__title { font-family: var(--font-display); font-size: 1.05rem; margin-bottom: var(--sp-2); }
   .card__excerpt { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.55; }
 
-  .thumb-1 { background: linear-gradient(135deg, #E7B25F, #C2693A); }
-  .thumb-2 { background: linear-gradient(135deg, #8E97A6, #3D4654); }
-  .thumb-3 { background: linear-gradient(135deg, #7FA66E, #36563F); }
-  .thumb-4 { background: linear-gradient(135deg, #D88A8E, #7A3B4C); }
+  .thumb-1 { background: linear-gradient(135deg, #FFB3D9, #FF1493); }
+  .thumb-2 { background: linear-gradient(135deg, #FF69B4, #C2185B); }
+  .thumb-3 { background: linear-gradient(135deg, #FF8DC7, #FF3399); }
+  .thumb-4 { background: linear-gradient(135deg, #FFD6EC, #FF1493); }
 
   footer {
     text-align: center;
@@ -436,14 +436,14 @@
       <svg class="globe-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="sphereGrad" cx="33%" cy="28%" r="78%">
-            <stop offset="0%" stop-color="#B8E4F2" />
-            <stop offset="45%" stop-color="#7EC8E3" />
-            <stop offset="100%" stop-color="#2A7FA8" />
+            <stop offset="0%" stop-color="#FFD6EC" />
+            <stop offset="45%" stop-color="#FF69B4" />
+            <stop offset="100%" stop-color="#C2185B" />
           </radialGradient>
           <radialGradient id="sphereGradDark" cx="33%" cy="28%" r="78%">
-            <stop offset="0%" stop-color="#3A6A85" />
-            <stop offset="60%" stop-color="#1E4F6B" />
-            <stop offset="100%" stop-color="#0A1F2E" />
+            <stop offset="0%" stop-color="#FF8DC7" />
+            <stop offset="60%" stop-color="#C2185B" />
+            <stop offset="100%" stop-color="#5A0030" />
           </radialGradient>
           <clipPath id="globeClip">
             <circle cx="200" cy="200" r="178" />
@@ -476,7 +476,7 @@
               Q 82,158 78,140
               Q 68,125 72,108
               Q 74,94 95,85 Z
-            " fill="#7DBF72" fill-opacity="0.85" stroke="var(--ink)" stroke-opacity="0.55" stroke-width="2.2" stroke-linejoin="round" />
+            " fill="#FF8DC7" fill-opacity="0.85" stroke="var(--ink)" stroke-opacity="0.45" stroke-width="2.2" stroke-linejoin="round" />
 
             <!-- 남아메리카 -->
             <path class="sketchy" d="
@@ -489,7 +489,7 @@
               Q 110,284 106,265
               Q 100,244 104,222
               Q 108,205 120,195 Z
-            " fill="#7DBF72" fill-opacity="0.85" stroke="var(--ink)" stroke-opacity="0.55" stroke-width="2.2" stroke-linejoin="round" />
+            " fill="#FF8DC7" fill-opacity="0.85" stroke="var(--ink)" stroke-opacity="0.45" stroke-width="2.2" stroke-linejoin="round" />
 
             <!-- 유럽 -->
             <path class="sketchy" d="
@@ -501,7 +501,7 @@
               Q 200,134 192,124
               Q 184,114 186,100
               Q 188,91 196,88 Z
-            " fill="#E8C97A" fill-opacity="0.9" stroke="var(--ink)" stroke-opacity="0.55" stroke-width="2" stroke-linejoin="round" />
+            " fill="#FF3399" fill-opacity="0.80" stroke="var(--ink)" stroke-opacity="0.45" stroke-width="2" stroke-linejoin="round" />
 
             <!-- 아프리카 -->
             <path class="sketchy" d="
@@ -516,7 +516,7 @@
               Q 166,214 168,192
               Q 170,168 178,152
               Q 186,138 200,138 Z
-            " fill="#E8C97A" fill-opacity="0.9" stroke="var(--ink)" stroke-opacity="0.55" stroke-width="2.2" stroke-linejoin="round" />
+            " fill="#FF3399" fill-opacity="0.80" stroke="var(--ink)" stroke-opacity="0.45" stroke-width="2.2" stroke-linejoin="round" />
 
             <!-- 아시아 -->
             <path class="sketchy" d="
@@ -530,7 +530,7 @@
               Q 256,170 244,152
               Q 232,134 234,112
               Q 236,90 248,72 Z
-            " fill="#E8C97A" fill-opacity="0.9" stroke="var(--ink)" stroke-opacity="0.55" stroke-width="2.2" stroke-linejoin="round" />
+            " fill="#FF3399" fill-opacity="0.80" stroke="var(--ink)" stroke-opacity="0.45" stroke-width="2.2" stroke-linejoin="round" />
 
             <!-- 오세아니아 -->
             <path class="sketchy" d="
@@ -542,7 +542,7 @@
               Q 306,278 298,264
               Q 292,250 298,238
               Q 300,234 302,232 Z
-            " fill="#7DBF72" fill-opacity="0.75" stroke="var(--ink)" stroke-opacity="0.5" stroke-width="1.8" stroke-linejoin="round" />
+            " fill="#FF8DC7" fill-opacity="0.75" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1.8" stroke-linejoin="round" />
 
             <!-- 귀여운 포인트: 별/점 강조 -->
             <circle cx="214" cy="110" r="3" fill="var(--ink)" fill-opacity="0.25" />
@@ -566,9 +566,9 @@
     <svg class="dome-svg" viewBox="0 0 340 175" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <radialGradient id="domeGrad" cx="50%" cy="10%" r="90%">
-          <stop offset="0%" stop-color="#B8E4F2" />
-          <stop offset="60%" stop-color="#7EC8E3" />
-          <stop offset="100%" stop-color="#2A7FA8" />
+          <stop offset="0%" stop-color="#FFD6EC" />
+          <stop offset="60%" stop-color="#FF69B4" />
+          <stop offset="100%" stop-color="#C2185B" />
         </radialGradient>
         <clipPath id="domeClip">
           <rect x="0" y="0" width="340" height="175" />
@@ -584,11 +584,11 @@
       <line x1="278" y1="14" x2="278" y2="175" stroke="var(--ink)" stroke-opacity="0.05" stroke-width="1" />
       <!-- 미니 대륙 흔적 -->
       <path d="M 80,80 Q 92,70 108,76 Q 120,82 116,96 Q 110,110 96,112 Q 80,110 76,96 Q 73,86 80,80 Z"
-            fill="#7DBF72" fill-opacity="0.65" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1.5" />
+            fill="#FF8DC7" fill-opacity="0.65" stroke="var(--ink)" stroke-opacity="0.35" stroke-width="1.5" />
       <path d="M 145,52 Q 156,44 170,48 Q 184,52 186,66 Q 188,80 174,86 Q 158,90 148,78 Q 138,66 145,52 Z"
-            fill="#E8C97A" fill-opacity="0.7" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1.5" />
+            fill="#FF3399" fill-opacity="0.60" stroke="var(--ink)" stroke-opacity="0.35" stroke-width="1.5" />
       <path d="M 220,65 Q 234,58 250,64 Q 264,70 264,86 Q 262,100 248,104 Q 232,108 222,96 Q 212,84 220,65 Z"
-            fill="#E8C97A" fill-opacity="0.65" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1.5" />
+            fill="#FF3399" fill-opacity="0.55" stroke="var(--ink)" stroke-opacity="0.35" stroke-width="1.5" />
       <!-- 테두리 -->
       <ellipse cx="170" cy="175" rx="168" ry="168" fill="none" stroke="var(--ink)" stroke-width="2.5" clip-path="url(#domeClip)" />
       <!-- 하단 평면선 강조 -->
